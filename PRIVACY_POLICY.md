@@ -9,21 +9,25 @@ This Privacy Policy describes how the "Web Table to Google Sheets Exporter" Chro
 ## Information We Collect
 
 ### 1. Google Account Information
+
 - **What we collect**: Your Google account email and basic profile information
 - **Why we collect it**: To authenticate with Google APIs and access your Google Sheets
 - **How we collect it**: Through Google OAuth 2.0 authentication flow
 
 ### 2. Google Sheets Data
+
 - **What we access**: Read and write access to your Google Sheets
 - **Why we access it**: To export web table data to your specified Google Sheets
 - **Scope of access**: Only the sheets you explicitly specify in the extension
 
 ### 3. Web Page Data
+
 - **What we collect**: HTML table data from web pages you choose to export
 - **Why we collect it**: To extract and format data for export to Google Sheets
 - **When we collect it**: Only when you actively use the "Scan Current Page" feature
 
 ### 4. Extension Usage Data
+
 - **What we store**: Google Sheet URLs you save, column selections, and export preferences
 - **Where we store it**: Locally in your browser using Chrome's storage API
 - **Why we store it**: To remember your preferences and improve user experience
@@ -45,11 +49,13 @@ This Privacy Policy describes how the "Web Table to Google Sheets Exporter" Chro
 ## Data Storage and Security
 
 ### Local Storage
+
 - Extension preferences are stored locally in your browser
 - No sensitive data is stored permanently on external servers
 - You can clear this data by removing the extension
 
 ### Google Services
+
 - Your Google Sheets data remains in your Google account
 - We follow Google's security best practices for API access
 - All communications with Google APIs use encrypted HTTPS connections
@@ -57,12 +63,14 @@ This Privacy Policy describes how the "Web Table to Google Sheets Exporter" Chro
 ## Your Rights and Controls
 
 ### You have the right to:
+
 1. **Revoke Access**: Remove extension permissions at any time through Google Account settings
 2. **Delete Data**: Uninstall the extension to remove all local data
 3. **Control Exports**: Choose which tables and columns to export
 4. **Limit Access**: Specify exactly which Google Sheets the extension can access
 
 ### How to exercise your rights:
+
 - **Revoke Google permissions**: Visit [Google Account Permissions](https://myaccount.google.com/permissions)
 - **Remove extension data**: Chrome Settings > Extensions > Remove extension
 - **Clear stored preferences**: Use the extension's logout feature
@@ -72,6 +80,7 @@ This Privacy Policy describes how the "Web Table to Google Sheets Exporter" Chro
 This extension integrates with:
 
 ### Google APIs
+
 - **Google Sheets API**: For reading sheet information and writing data
 - **Google Drive API**: For accessing sheet metadata
 - **Google Identity API**: For authentication
@@ -87,6 +96,7 @@ Please refer to [Google's Privacy Policy](https://policies.google.com/privacy) f
 ## Changes to This Privacy Policy
 
 We may update this Privacy Policy from time to time. We will notify users of any material changes by:
+
 - Updating the "Effective Date" at the top of this policy
 - Providing notice through the extension interface if significant changes occur
 
@@ -104,6 +114,7 @@ If you have any questions about this Privacy Policy or the extension's privacy p
 ## Compliance
 
 This extension complies with:
+
 - Google Chrome Web Store Developer Program Policies
 - Google API Services User Data Policy
 - General Data Protection Regulation (GDPR) principles
@@ -112,6 +123,7 @@ This extension complies with:
 ## Data Processing Legal Basis
 
 We process your data based on:
+
 - **Consent**: You explicitly authorize the extension to access your Google Sheets
 - **Legitimate Interest**: To provide the core functionality you requested
 - **Contract Performance**: To deliver the service you're using

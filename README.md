@@ -116,6 +116,7 @@ Trong `content_scripts.matches`, thêm domain cụ thể:
 **Thông báo lỗi**: "Tools For BroSis Website chưa hoàn tất quy trình xác minh của Google..."
 
 **Giải pháp nhanh nhất**:
+
 1. Truy cập [Google Cloud Console](https://console.cloud.google.com/)
 2. **APIs & Services** > **OAuth consent screen**
 3. Click **PUBLISH APP**

@@ -39,7 +39,7 @@
 2. **QUAN TRỌNG**: Chọn **External** (không chọn Internal trừ khi bạn có Google Workspace)
 3. Click **Create**
 4. Điền thông tin:
-   - **App name**: "Web Table to Sheets Exporter"  
+   - **App name**: "Web Table to Sheets Exporter"
    - **User support email**: email của bạn
    - **App logo**: (tùy chọn, có thể bỏ qua)
    - **App domain - Homepage**: `https://github.com/yourusername/web-table-to-sheets-exporter` (thay yourusername)
@@ -58,14 +58,16 @@
 ### 🚨 GIẢI QUYẾT LỖI: "Ứng dụng đang trong giai đoạn thử nghiệm"
 
 **Tùy chọn A: Publish App (Khuyến nghị cho sử dụng rộng rãi)**
-1. Trong **OAuth consent screen**, click **PUBLISH APP**  
+
+1. Trong **OAuth consent screen**, click **PUBLISH APP**
 2. Click **Confirm**
 3. App sẽ chuyển sang trạng thái **In production**
 4. **Lưu ý**: Google có thể yêu cầu verification cho một số scopes nhạy cảm, nhưng với Sheets API basic thường không cần
 
 **Tùy chọn B: Thêm Test Users (Giải pháp tạm thời)**
+
 1. Trong **OAuth consent screen** > **Test users**
-2. Click **Add users**  
+2. Click **Add users**
 3. Thêm email của tất cả người sẽ sử dụng extension
 4. Click **Save**
 5. **Hạn chế**: Chỉ có thể có tối đa 100 test users và token hết hạn sau 7 ngày
@@ -162,13 +164,14 @@ Mở file `manifest.json` và thay đổi:
 
 ## 8. Troubleshooting thường gặp
 
-### ❌ Lỗi: "Ứng dụng đang trong giai đoạn thử nghiệm" 
+### ❌ Lỗi: "Ứng dụng đang trong giai đoạn thử nghiệm"
 
 **Thông báo**: "Tools For BroSis Website chưa hoàn tất quy trình xác minh của Google. Ứng dụng này đang trong giai đoạn thử nghiệm..."
 
 **Nguyên nhân**: OAuth consent screen chưa được publish
 
 **Giải pháp nhanh**:
+
 1. Vào [Google Cloud Console](https://console.cloud.google.com/)
 2. **APIs & Services** > **OAuth consent screen**
 3. Click **PUBLISH APP**
@@ -176,6 +179,7 @@ Mở file `manifest.json` và thay đổi:
 5. Thử authenticate lại
 
 **Giải pháp tạm thời** (nếu không muốn publish):
+
 1. Trong **OAuth consent screen** > **Test users**
 2. Click **Add users**
 3. Thêm email của bạn

@@ -139,15 +139,22 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     } catch (error) {
       console.error("Authentication error:", error);
-      
+
       // Hiển thị error message với formatting tốt hơn
       let errorMessage = error.message;
-      
+
       // Nếu là lỗi về testing mode, hiển thị HTML formatting
-      if (errorMessage.includes('testing mode') || errorMessage.includes('PUBLISH APP')) {
+      if (
+        errorMessage.includes("testing mode") ||
+        errorMessage.includes("PUBLISH APP")
+      ) {
         showDetailedError(authStatus, errorMessage);
       } else {
-        showStatus(authStatus, "Authentication failed: " + errorMessage, "error");
+        showStatus(
+          authStatus,
+          "Authentication failed: " + errorMessage,
+          "error"
+        );
       }
     } finally {
       authenticateBtn.disabled = false;
@@ -427,23 +434,29 @@ document.addEventListener("DOMContentLoaded", function () {
   function showDetailedError(element, message) {
     // Convert line breaks to HTML
     const htmlMessage = message
-      .replace(/\n/g, '<br>')
-      .replace(/1\./g, '<strong>1.</strong>')
-      .replace(/2\./g, '<strong>2.</strong>')
-      .replace(/3\./g, '<strong>3.</strong>')
-      .replace(/4\./g, '<strong>4.</strong>')
-      .replace(/Quick fix:/g, '<strong style="color: #e74c3c;">Quick fix:</strong>')
-      .replace(/PUBLISH APP/g, '<strong style="color: #27ae60;">PUBLISH APP</strong>');
-    
+      .replace(/\n/g, "<br>")
+      .replace(/1\./g, "<strong>1.</strong>")
+      .replace(/2\./g, "<strong>2.</strong>")
+      .replace(/3\./g, "<strong>3.</strong>")
+      .replace(/4\./g, "<strong>4.</strong>")
+      .replace(
+        /Quick fix:/g,
+        '<strong style="color: #e74c3c;">Quick fix:</strong>'
+      )
+      .replace(
+        /PUBLISH APP/g,
+        '<strong style="color: #27ae60;">PUBLISH APP</strong>'
+      );
+
     element.innerHTML = htmlMessage;
-    element.className = 'status error';
-    element.style.whiteSpace = 'normal';
-    element.style.lineHeight = '1.4';
-    
+    element.className = "status error";
+    element.style.whiteSpace = "normal";
+    element.style.lineHeight = "1.4";
+
     // Auto clear after 15 seconds for detailed errors
     setTimeout(() => {
-      element.innerHTML = '';
-      element.className = 'status';
+      element.innerHTML = "";
+      element.className = "status";
     }, 15000);
   }
 });

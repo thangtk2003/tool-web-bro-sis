@@ -37,8 +37,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 async function handleAuthentication(sendResponse) {
   try {
-    console.log('Starting authentication process...');
-    
+    console.log("Starting authentication process...");
+
     // Sử dụng Chrome Identity API để lấy OAuth token
     const token = await new Promise((resolve, reject) => {
       chrome.identity.getAuthToken(
@@ -51,24 +51,43 @@ async function handleAuthentication(sendResponse) {
         },
         (token) => {
           if (chrome.runtime.lastError) {
-            console.error('Chrome Identity API error:', chrome.runtime.lastError);
-            
+            console.error(
+              "Chrome Identity API error:",
+              chrome.runtime.lastError
+            );
+
             // Kiểm tra các loại lỗi thường gặp
             const errorMessage = chrome.runtime.lastError.message;
-            
-            if (errorMessage.includes('OAuth2 not granted or revoked')) {
-              reject(new Error('OAuth2 permissions not granted. Please check OAuth consent screen configuration.'));
-            } else if (errorMessage.includes('OAuth2 client not found')) {
-              reject(new Error('OAuth2 client not found. Please check Client ID in manifest.json.'));
-            } else if (errorMessage.includes('redirect_uri_mismatch')) {
-              reject(new Error('Redirect URI mismatch. Please update Extension ID in Google Cloud Console.'));
-            } else if (errorMessage.includes('access_denied')) {
-              reject(new Error('Access denied. App may be in testing mode. Please publish OAuth consent screen or add test users.'));
+
+            if (errorMessage.includes("OAuth2 not granted or revoked")) {
+              reject(
+                new Error(
+                  "OAuth2 permissions not granted. Please check OAuth consent screen configuration."
+                )
+              );
+            } else if (errorMessage.includes("OAuth2 client not found")) {
+              reject(
+                new Error(
+                  "OAuth2 client not found. Please check Client ID in manifest.json."
+                )
+              );
+            } else if (errorMessage.includes("redirect_uri_mismatch")) {
+              reject(
+                new Error(
+                  "Redirect URI mismatch. Please update Extension ID in Google Cloud Console."
+                )
+              );
+            } else if (errorMessage.includes("access_denied")) {
+              reject(
+                new Error(
+                  "Access denied. App may be in testing mode. Please publish OAuth consent screen or add test users."
+                )
+              );
             } else {
               reject(new Error(`Authentication failed: ${errorMessage}`));
             }
           } else {
-            console.log('Authentication successful, token received');
+            console.log("Authentication successful, token received");
             resolve(token);
           }
         }
@@ -83,7 +102,7 @@ async function handleAuthentication(sendResponse) {
       tokenTimestamp: Date.now(),
     });
 
-    console.log('Token saved to storage');
+    console.log("Token saved to storage");
 
     sendResponse({
       success: true,
@@ -91,11 +110,11 @@ async function handleAuthentication(sendResponse) {
     });
   } catch (error) {
     console.error("Authentication error:", error);
-    
+
     // Cung cấp thông tin hữu ích cho user
     let userFriendlyMessage = error.message;
-    
-    if (error.message.includes('testing mode')) {
+
+    if (error.message.includes("testing mode")) {
       userFriendlyMessage = `
 Authentication failed: App is in testing mode.
 
@@ -108,11 +127,11 @@ Quick fix:
 Or add your email as test user if you prefer to keep it in testing mode.
       `.trim();
     }
-    
+
     sendResponse({
       success: false,
       error: userFriendlyMessage,
-      originalError: error.message
+      originalError: error.message,
     });
   }
 }

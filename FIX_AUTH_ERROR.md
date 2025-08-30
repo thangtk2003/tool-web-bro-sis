@@ -2,16 +2,19 @@
 
 ## Lỗi: "Ứng dụng đang trong giai đoạn thử nghiệm"
 
-**Thông báo đầy đủ**: 
+**Thông báo đầy đủ**:
+
 > "Tools For BroSis Website chưa hoàn tất quy trình xác minh của Google. Ứng dụng này đang trong giai đoạn thử nghiệm và chỉ những người thử nghiệm mà nhà phát triển đã phê duyệt mới truy cập được."
 
 ## 🎯 Giải pháp NHANH NHẤT (5 phút)
 
 ### Bước 1: Truy cập Google Cloud Console
+
 1. Mở https://console.cloud.google.com/
 2. Chọn project của bạn (tên project tạo cho extension)
 
 ### Bước 2: Cập nhật OAuth Consent Screen
+
 1. Vào **APIs & Services** > **OAuth consent screen**
 2. Click **EDIT APP**
 3. Điền thông tin bắt buộc:
@@ -30,19 +33,23 @@
 4. Click **Save and Continue**
 
 ### TÙY CHỌN NHANH: Sử dụng placeholder URLs
+
 Nếu bạn không có website, có thể dùng:
+
 - **Homepage**: `https://example.com`
 - **Privacy Policy**: `https://example.com/privacy`
 
 ⚠️ **Lưu ý**: Google có thể review các URLs này, nên tốt nhất là tạo GitHub repository thực.
 
 ### Bước 3: Publish OAuth Consent Screen
-1. Bạn sẽ thấy status "Testing" 
+
+1. Bạn sẽ thấy status "Testing"
 2. Click nút **PUBLISH APP** (màu xanh)
 3. Popup sẽ hiện ra, click **Confirm**
 4. Status sẽ chuyển thành "In production"
 
 ### Bước 4: Test lại Extension
+
 1. Quay lại Chrome extension
 2. Click **Connect to Google**
 3. Lần này sẽ không có cảnh báo nữa!
@@ -54,6 +61,7 @@ Nếu bạn không có website, có thể dùng:
 Nếu bạn muốn tạo URLs chính thức cho extension:
 
 ### Bước 1: Tạo GitHub Repository
+
 1. Truy cập https://github.com/new
 2. **Repository name**: `web-table-to-sheets-exporter`
 3. Chọn **Public**
@@ -61,11 +69,13 @@ Nếu bạn muốn tạo URLs chính thức cho extension:
 5. Click **Create repository**
 
 ### Bước 2: Upload files
+
 1. Click **uploading an existing file**
 2. Drag & drop tất cả files từ extension folder
 3. Commit changes
 
 ### Bước 3: Sử dụng URLs
+
 - **Homepage**: `https://github.com/yourusername/web-table-to-sheets-exporter`
 - **Privacy Policy**: `https://github.com/yourusername/web-table-to-sheets-exporter/blob/main/PRIVACY_POLICY.md`
 
@@ -74,13 +84,15 @@ Nếu bạn muốn tạo URLs chính thức cho extension:
 ## 🔧 Giải pháp TẠM THỜI (nếu không muốn publish)
 
 ### Thêm Test Users
+
 1. Trong **OAuth consent screen** > **Test users**
 2. Click **+ ADD USERS**
 3. Nhập email của bạn (và email của team nếu có)
 4. Click **Save**
 5. Test lại extension
 
-**Hạn chế**: 
+**Hạn chế**:
+
 - Chỉ có thể thêm tối đa 100 test users
 - Refresh token có thể hết hạn sau 7 ngày
 
@@ -89,7 +101,8 @@ Nếu bạn muốn tạo URLs chính thức cho extension:
 ## ❓ Tại sao lỗi này xảy ra?
 
 Google yêu cầu tất cả OAuth applications phải được "verify" trước khi cho phép public access. Khi app ở trạng thái "Testing", chỉ có:
-- Chính tài khoản developer 
+
+- Chính tài khoản developer
 - Test users được thêm thủ công
 
 mới có thể sử dụng được.
@@ -105,7 +118,8 @@ mới có thể sử dụng được.
 
 1. **Kiểm tra email**: Đảm bảo email bạn đang dùng để authenticate trùng với email owner của Google Cloud Project
 
-2. **Clear browser cache**: 
+2. **Clear browser cache**:
+
    - Vào `chrome://settings/content/cookies`
    - Xóa cookies cho `accounts.google.com`
 
