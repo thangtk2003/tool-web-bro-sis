@@ -19,7 +19,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const exportSection = document.getElementById("exportSection");
   const targetSheetSelect = document.getElementById("targetSheet");
   const startRowInput = document.getElementById("startRow");
+  const startColumnSelect = document.getElementById("startColumn");
   const includeHeadersCheckbox = document.getElementById("includeHeaders");
+  const skipFirstDataRowCheckbox = document.getElementById("skipFirstDataRow");
   const exportDataBtn = document.getElementById("exportData");
   const exportStatus = document.getElementById("exportStatus");
 
@@ -329,6 +331,7 @@ document.addEventListener("DOMContentLoaded", function () {
         action: "extractTableData",
         selectedColumns: selectedColumns,
         includeHeaders: includeHeadersCheckbox.checked,
+        skipFirstDataRow: skipFirstDataRowCheckbox.checked,
       });
 
       if (!response.success) {
@@ -343,6 +346,7 @@ document.addEventListener("DOMContentLoaded", function () {
         sheetName: targetSheet,
         data: response.data,
         startRow: parseInt(startRowInput.value) || null,
+        startColumn: startColumnSelect.value,
       });
 
       if (exportResponse.success) {

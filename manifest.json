@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Web Table to Google Sheets Exporter",
-  "version": "2.5",
+  "version": "3.0",
   "description": "Export web table data to Google Sheets",
 
   "permissions": [

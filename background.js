@@ -269,7 +269,7 @@ async function getSheetInfo(sheetId, sendResponse) {
  */
 async function exportToGoogleSheets(request, sendResponse) {
   try {
-    const { sheetId, sheetName, data, startRow } = request;
+    const { sheetId, sheetName, data, startRow, startColumn } = request;
 
     if (!accessToken) {
       throw new Error("Not authenticated");
@@ -281,14 +281,18 @@ async function exportToGoogleSheets(request, sendResponse) {
 
     // Xác định range để ghi dữ liệu
     let range;
+    const column = startColumn || "A"; // Default to column A if not specified
+
     if (startRow) {
-      // Nếu có startRow, ghi từ hàng đó
-      range = `${sheetName}!A${startRow}`;
+      // Nếu có startRow, ghi từ hàng đó và cột được chỉ định
+      range = `${sheetName}!${column}${startRow}`;
     } else {
       // Nếu không có startRow, tìm hàng trống tiếp theo
       const nextRow = await findNextEmptyRow(sheetId, sheetName);
-      range = `${sheetName}!A${nextRow}`;
+      range = `${sheetName}!${column}${nextRow}`;
     }
+
+    console.log("Export range:", range);
 
     // Prepare data for Google Sheets API
     const requestBody = {
@@ -320,7 +324,7 @@ async function exportToGoogleSheets(request, sendResponse) {
 
     sendResponse({
       success: true,
-      message: `Successfully exported ${data.length} rows to ${sheetName}`,
+      message: `Successfully exported ${data.length} rows to ${sheetName} starting at ${range}`,
       details: result,
     });
   } catch (error) {

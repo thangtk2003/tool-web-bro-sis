@@ -29,11 +29,20 @@ function detectTables(sendResponse) {
       }
     });
 
-    // 2. Phát hiện MuiDataGrid (Material-UI DataGrid)
+    // 2. Phát hiện MuiDataGrid (Material-UI DataGrid) - CHỈ LẤY ROOT ELEMENTS
     const muiDataGrids = document.querySelectorAll(
-      '[class*="MuiDataGrid-main"], [class*="MuiDataGrid-root"], .MuiDataGrid-main, .MuiDataGrid-root'
+      '.MuiDataGrid-root, [class*="MuiDataGrid-root"]'
     );
     muiDataGrids.forEach((dataGrid) => {
+      // Skip nếu đây là nested DataGrid
+      const hasParentDataGrid = dataGrid.parentElement?.closest(
+        '.MuiDataGrid-root, [class*="MuiDataGrid-root"]'
+      );
+      if (hasParentDataGrid) {
+        console.log("Skipping nested MuiDataGrid:", dataGrid);
+        return;
+      }
+
       const tableInfo = detectMuiDataGrid(dataGrid, tableIndex, "MUI DataGrid");
       if (tableInfo) {
         tableData.push(tableInfo);
@@ -58,6 +67,20 @@ function detectTables(sendResponse) {
       '[role="grid"], [role="table"], [class*="data-grid"], [class*="datatable"], [class*="data-table"]'
     );
     genericTables.forEach((table) => {
+      // Skip nếu đây là MuiDataGrid hoặc AgGrid đã được detect
+      if (
+        table.classList.contains("MuiDataGrid-root") ||
+        table.className.includes("MuiDataGrid-root") ||
+        table.className.includes("MuiDataGrid-main") ||
+        table.className.includes("ag-grid") ||
+        table.closest(".MuiDataGrid-root") ||
+        table.closest('[class*="MuiDataGrid-root"]') ||
+        table.closest('[class*="ag-grid"]')
+      ) {
+        console.log("Skipping already detected table:", table);
+        return;
+      }
+
       // Kiểm tra xem đã được phát hiện chưa
       const alreadyDetected = tableData.some((t) => t.element === table);
       if (!alreadyDetected) {
@@ -160,128 +183,257 @@ function detectHtmlTable(table, index, type) {
 function detectMuiDataGrid(dataGrid, index, type) {
   try {
     console.log("Detecting MuiDataGrid:", dataGrid);
+    console.log("DataGrid classes:", dataGrid.className);
 
-    // Thử nhiều cách khác nhau để tìm header container
-    let headerContainer = null;
+    // Debug structure
+    debugMuiDataGridStructure(dataGrid);
 
-    // Cách 1: Tìm theo class MuiDataGrid-columnHeaders
-    headerContainer = dataGrid.querySelector(
-      '[class*="MuiDataGrid-columnHeaders"], .MuiDataGrid-columnHeaders'
-    );
-
-    // Cách 2: Tìm theo role="row" đầu tiên (thường là header)
-    if (!headerContainer) {
-      const firstRow = dataGrid.querySelector('[role="row"]');
-      if (firstRow && firstRow.getAttribute("aria-rowindex") === "1") {
-        headerContainer = firstRow;
+    // Tìm main container nếu dataGrid là root
+    let mainContainer = dataGrid;
+    if (
+      dataGrid.classList.contains("MuiDataGrid-root") ||
+      dataGrid.className.includes("MuiDataGrid-root")
+    ) {
+      const main = dataGrid.querySelector(
+        '.MuiDataGrid-main, [class*="MuiDataGrid-main"]'
+      );
+      if (main) {
+        mainContainer = main;
+        console.log("Using main container:", mainContainer);
       }
     }
 
-    // Cách 3: Tìm theo structure thông thường của MUI DataGrid
-    if (!headerContainer) {
-      headerContainer = dataGrid.querySelector(
-        '[class*="MuiDataGrid-main"] > div:first-child, .MuiDataGrid-main > div:first-child'
-      );
+    let headerCells = [];
+
+    // Strategy 1: Tìm columnHeaders container trong main
+    const headerContainer = mainContainer.querySelector(
+      '[class*="MuiDataGrid-columnHeaders"], .MuiDataGrid-columnHeaders'
+    );
+
+    if (headerContainer) {
+      console.log("Found headerContainer:", headerContainer);
+
+      // Lấy tất cả columnheader cells từ container
+      headerCells = headerContainer.querySelectorAll('[role="columnheader"]');
+      console.log("Header cells from columnheader role:", headerCells.length);
+
+      // Nếu không có, thử với class
+      if (headerCells.length === 0) {
+        headerCells = headerContainer.querySelectorAll(
+          '[class*="MuiDataGrid-columnHeader"]'
+        );
+        console.log("Header cells from class:", headerCells.length);
+      }
     }
 
-    if (!headerContainer) {
-      console.log("No header container found");
+    // Strategy 2: Fallback - tìm trực tiếp trong main container
+    if (headerCells.length === 0) {
+      headerCells = mainContainer.querySelectorAll('[role="columnheader"]');
+      console.log("Header cells from main container:", headerCells.length);
+    }
+
+    if (headerCells.length === 0) {
+      console.log("No header cells found");
       return null;
     }
 
-    console.log("Header container found:", headerContainer);
-
-    // Lấy tên các cột từ headers - thử nhiều cách
-    const columns = [];
-    let headerCells = [];
-
-    // Cách 1: Tìm theo class MuiDataGrid-columnHeader
-    headerCells = headerContainer.querySelectorAll(
-      '[class*="MuiDataGrid-columnHeader"], .MuiDataGrid-columnHeader'
-    );
-
-    // Cách 2: Tìm theo role="columnheader"
+    // Strategy 5: Tìm row đầu tiên và lấy cells
     if (headerCells.length === 0) {
-      headerCells = headerContainer.querySelectorAll('[role="columnheader"]');
-    }
-
-    // Cách 3: Tìm tất cả div con trong header container
-    if (headerCells.length === 0) {
-      headerCells = headerContainer.querySelectorAll(
-        "div[data-field], div[data-colindex]"
+      const firstRow = dataGrid.querySelector(
+        '[role="row"][aria-rowindex="1"]'
       );
+      if (firstRow) {
+        headerCells = firstRow.querySelectorAll(
+          '[role="gridcell"], [role="columnheader"], div[data-field]'
+        );
+        console.log("Header cells from first row:", headerCells.length);
+      }
     }
 
-    // Cách 4: Fallback - lấy tất cả div con
     if (headerCells.length === 0) {
-      headerCells = headerContainer.children;
+      console.log("No header cells found");
+      return null;
     }
 
-    console.log("Found header cells:", headerCells.length);
+    // Extract column names với logic cải thiện
+    const columns = [];
+    const seenColumns = new Set();
 
     Array.from(headerCells).forEach((headerCell, cellIndex) => {
       let columnName = "";
 
-      // Thử nhiều cách khác nhau để lấy tên cột
+      console.log(`\n=== Processing header cell ${cellIndex} ===`);
+      console.log("Cell element:", headerCell);
+      console.log("Cell classes:", headerCell.className);
+      console.log("Cell data-field:", headerCell.getAttribute("data-field"));
 
-      // Cách 1: Tìm trong MuiDataGrid-columnHeaderTitle
-      let titleElement = headerCell.querySelector(
-        '[class*="MuiDataGrid-columnHeaderTitle"], .MuiDataGrid-columnHeaderTitle'
-      );
-      if (titleElement) {
-        columnName = titleElement.textContent.trim();
+      // Skip nếu cell này là hidden
+      const cellStyle = window.getComputedStyle(headerCell);
+      if (cellStyle.display === "none" || cellStyle.visibility === "hidden") {
+        console.log(`Skipping hidden cell ${cellIndex}`);
+        return;
       }
 
-      // Cách 2: Tìm theo data-field attribute
-      if (!columnName && headerCell.getAttribute) {
-        const dataField = headerCell.getAttribute("data-field");
-        if (dataField) {
-          columnName = dataField;
+      // Method 1: data-field attribute (most reliable)
+      const dataField = headerCell.getAttribute("data-field");
+      if (
+        dataField &&
+        dataField !== "__check__" &&
+        dataField !== "__actions__" &&
+        dataField !== "actions"
+      ) {
+        columnName = dataField;
+        console.log(`✓ Column ${cellIndex} from data-field: "${columnName}"`);
+      }
+
+      // Method 2: MuiDataGrid-columnHeaderTitle (most specific)
+      if (!columnName) {
+        const titleElement = headerCell.querySelector(
+          '[class*="MuiDataGrid-columnHeaderTitle"], .MuiDataGrid-columnHeaderTitle'
+        );
+        if (titleElement) {
+          const titleText = titleElement.textContent.trim();
+          if (titleText && titleText.length < 100) {
+            // Reasonable length check
+            columnName = titleText;
+            console.log(
+              `✓ Column ${cellIndex} from titleElement: "${columnName}"`
+            );
+          }
         }
       }
 
-      // Cách 3: Lấy text content trực tiếp nhưng lọc bỏ các icon/button
+      // Method 3: aria-label (cleaned)
       if (!columnName) {
-        let textContent = headerCell.textContent.trim();
-        // Lọc bỏ các ký tự đặc biệt (arrow, sort icons)
-        textContent = textContent.replace(/[↑↓▲▼⬆⬇]/g, "").trim();
-        columnName = textContent;
+        const ariaLabel = headerCell.getAttribute("aria-label");
+        if (
+          ariaLabel &&
+          !ariaLabel.includes("Sort") &&
+          !ariaLabel.includes("Menu") &&
+          !ariaLabel.includes("Actions")
+        ) {
+          const cleanedLabel = ariaLabel
+            .replace(/^(Sort by|Column|Header) /, "")
+            .trim();
+          if (cleanedLabel && cleanedLabel.length < 100) {
+            columnName = cleanedLabel;
+            console.log(
+              `✓ Column ${cellIndex} from aria-label: "${columnName}"`
+            );
+          }
+        }
       }
 
-      // Cách 4: Fallback
+      // Method 4: Direct text content (với filtering nghiêm ngặt)
+      if (!columnName) {
+        // Lấy chỉ text trực tiếp từ cell, không từ children
+        let directText = "";
+        for (let node of headerCell.childNodes) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            directText += node.textContent;
+          }
+        }
+
+        if (directText.trim()) {
+          let textContent = directText.trim();
+          // Clean text
+          textContent = textContent
+            .replace(/[↑↓▲▼⬆⬇]/g, "")
+            .replace(/\s*(asc|desc|sort|sorted|ascending|descending)\s*/gi, "")
+            .replace(/\s*(menu|actions)\s*/gi, "")
+            .trim();
+
+          if (
+            textContent &&
+            textContent.length > 0 &&
+            textContent.length < 50
+          ) {
+            columnName = textContent;
+            console.log(
+              `✓ Column ${cellIndex} from direct text: "${columnName}"`
+            );
+          }
+        }
+      }
+
+      // Method 5: Single child span/div (not container elements)
+      if (!columnName) {
+        const singleTextElements = headerCell.querySelectorAll(
+          'span:not([class*="sort"]):not([class*="icon"]), div:not([class*="sort"]):not([class*="icon"]):not([class*="container"])'
+        );
+        for (let elem of singleTextElements) {
+          const text = elem.textContent.trim();
+          // Chỉ lấy nếu text không quá dài (không phải combined text từ nhiều cột)
+          if (
+            text &&
+            !text.match(/[↑↓▲▼⬆⬇]/) &&
+            text.length > 0 &&
+            text.length < 50 &&
+            !text.includes(" ")
+          ) {
+            columnName = text;
+            console.log(
+              `✓ Column ${cellIndex} from single child: "${columnName}"`
+            );
+            break;
+          }
+        }
+      }
+
+      // Fallback: Use index-based name
       if (!columnName) {
         columnName = `Column ${cellIndex + 1}`;
+        console.log(`✓ Column ${cellIndex} fallback: "${columnName}"`);
       }
 
-      console.log(`Column ${cellIndex}: ${columnName}`);
-      columns.push(columnName);
+      // Clean column name
+      const cleanedColumnName = cleanCellText(columnName);
+
+      // Add to columns (allow some duplicates with suffix for different data-fields)
+      if (!seenColumns.has(cleanedColumnName)) {
+        columns.push(cleanedColumnName);
+        seenColumns.add(cleanedColumnName);
+        console.log(`✅ Added unique column: "${cleanedColumnName}"`);
+      } else {
+        // Allow duplicate with suffix if it has different data-field
+        if (dataField && dataField !== cleanedColumnName) {
+          const uniqueName = `${cleanedColumnName}_${dataField}`;
+          columns.push(uniqueName);
+          console.log(`✅ Added unique column with suffix: "${uniqueName}"`);
+        } else {
+          console.log(`❌ Skipped duplicate column: "${cleanedColumnName}"`);
+        }
+      }
     });
 
+    console.log("Final column names:", columns);
+
     if (columns.length === 0) {
-      console.log("No columns found");
+      console.log("No columns extracted");
       return null;
     }
 
-    // Đếm số hàng dữ liệu - cải thiện detection
+    // Đếm số hàng dữ liệu - sử dụng main container
     let dataRowCount = 0;
 
-    // Cách 1: Tìm trong virtualScroller
-    const virtualScroller = dataGrid.querySelector(
+    // Cách 1: Tìm trong virtualScroller của main container
+    const virtualScroller = mainContainer.querySelector(
       '[class*="MuiDataGrid-virtualScroller"], .MuiDataGrid-virtualScroller'
     );
     if (virtualScroller) {
       const dataRows = virtualScroller.querySelectorAll(
-        '[class*="MuiDataGrid-row"], .MuiDataGrid-row'
+        '[class*="MuiDataGrid-row"], .MuiDataGrid-row, [role="row"]'
       );
       dataRowCount = dataRows.length;
       console.log("Data rows found in virtualScroller:", dataRowCount);
     }
 
-    // Cách 2: Tìm tất cả rows và trừ đi header
+    // Cách 2: Tìm tất cả rows trong main và trừ đi header
     if (dataRowCount === 0) {
-      const allRows = dataGrid.querySelectorAll('[role="row"]');
-      const headerRows = dataGrid.querySelectorAll(
-        '[role="row"][aria-rowindex="1"], [class*="MuiDataGrid-columnHeaders"]'
+      const allRows = mainContainer.querySelectorAll('[role="row"]');
+      // Header row thường có aria-rowindex="1" hoặc nằm trong columnHeaders
+      const headerRows = mainContainer.querySelectorAll(
+        '[role="row"][aria-rowindex="1"], [class*="MuiDataGrid-columnHeaders"] [role="row"]'
       );
       dataRowCount = Math.max(0, allRows.length - headerRows.length);
       console.log(
@@ -314,15 +466,16 @@ function detectMuiDataGrid(dataGrid, index, type) {
       columns: columns.length,
       rows: dataRowCount,
       hasValidStructure,
+      finalColumns: columns.slice(0, 10), // Show first 10 columns for debugging
     });
 
     if (hasValidStructure) {
       return {
         index: index,
         type: type,
-        element: dataGrid,
+        element: dataGrid, // Return root element
         columns: columns,
-        rows: Math.max(0, dataRowCount), // Đảm bảo không âm
+        rows: Math.max(0, dataRowCount),
         hasHeader: true,
       };
     }
@@ -466,8 +619,10 @@ function detectGenericDataTable(table, index, type) {
  */
 function extractTableData(request, sendResponse) {
   try {
-    const { selectedColumns, includeHeaders } = request;
+    const { selectedColumns, includeHeaders, skipFirstDataRow } = request;
     const extractedData = [];
+
+    console.log("Extract options:", { includeHeaders, skipFirstDataRow });
 
     // Lấy các bảng đã được phát hiện trước đó
     const tables = window.detectedTables || [];
@@ -516,6 +671,30 @@ function extractTableData(request, sendResponse) {
             includeHeaders
           );
           break;
+      }
+
+      // Xử lý skipFirstDataRow nếu được yêu cầu
+      if (skipFirstDataRow && extractedRows.length > 0) {
+        console.log(
+          "Before skipping first data row:",
+          extractedRows.length,
+          "rows"
+        );
+
+        // Nếu có header, giữ header và bỏ dòng data đầu tiên
+        if (includeHeaders && extractedRows.length > 1) {
+          extractedRows = [extractedRows[0], ...extractedRows.slice(2)];
+        }
+        // Nếu không có header, bỏ dòng đầu tiên
+        else if (!includeHeaders && extractedRows.length > 0) {
+          extractedRows = extractedRows.slice(1);
+        }
+
+        console.log(
+          "After skipping first data row:",
+          extractedRows.length,
+          "rows"
+        );
       }
 
       extractedData.push(...extractedRows);
@@ -572,69 +751,115 @@ function extractMuiDataGridData(
       selectedColumnIndices
     );
 
-    // Trích xuất header nếu cần
+    // Tìm main container giống như trong detectMuiDataGrid
+    let mainContainer = dataGrid;
+    if (
+      dataGrid.classList.contains("MuiDataGrid-root") ||
+      dataGrid.className.includes("MuiDataGrid-root")
+    ) {
+      const main = dataGrid.querySelector(
+        '.MuiDataGrid-main, [class*="MuiDataGrid-main"]'
+      );
+      if (main) {
+        mainContainer = main;
+        console.log("Using main container for extraction:", mainContainer);
+      }
+    }
+
+    // Trích xuất header nếu cần - sử dụng CÙNG logic như detectMuiDataGrid
     if (includeHeaders) {
-      // Sử dụng cùng logic như trong detect function
-      let headerContainer = dataGrid.querySelector(
+      let headerCells = [];
+
+      // Strategy 1: Tìm columnHeaders container trong main
+      const headerContainer = mainContainer.querySelector(
         '[class*="MuiDataGrid-columnHeaders"], .MuiDataGrid-columnHeaders'
       );
 
-      if (!headerContainer) {
-        const firstRow = dataGrid.querySelector('[role="row"]');
-        if (firstRow && firstRow.getAttribute("aria-rowindex") === "1") {
-          headerContainer = firstRow;
-        }
-      }
-
-      if (!headerContainer) {
-        headerContainer = dataGrid.querySelector(
-          '[class*="MuiDataGrid-main"] > div:first-child, .MuiDataGrid-main > div:first-child'
-        );
-      }
-
       if (headerContainer) {
-        let headerCells = [];
+        console.log("Found headerContainer for extraction:", headerContainer);
 
-        // Thử nhiều cách tìm header cells
-        headerCells = headerContainer.querySelectorAll(
-          '[class*="MuiDataGrid-columnHeader"], .MuiDataGrid-columnHeader'
-        );
+        // Lấy tất cả columnheader cells từ container
+        headerCells = headerContainer.querySelectorAll('[role="columnheader"]');
+        console.log("Header cells from columnheader role:", headerCells.length);
+
+        // Nếu không có, thử với class
         if (headerCells.length === 0) {
           headerCells = headerContainer.querySelectorAll(
-            '[role="columnheader"]'
+            '[class*="MuiDataGrid-columnHeader"]'
           );
+          console.log("Header cells from class:", headerCells.length);
         }
-        if (headerCells.length === 0) {
-          headerCells = headerContainer.querySelectorAll(
-            "div[data-field], div[data-colindex]"
-          );
-        }
-        if (headerCells.length === 0) {
-          headerCells = headerContainer.children;
-        }
+      }
 
+      // Strategy 2: Fallback - tìm trực tiếp trong main container
+      if (headerCells.length === 0) {
+        headerCells = mainContainer.querySelectorAll('[role="columnheader"]');
+        console.log("Header cells from main container:", headerCells.length);
+      }
+
+      if (headerCells.length > 0) {
         const headerData = selectedColumnIndices.map((colIndex) => {
           const cell = headerCells[colIndex];
-          if (!cell) return "";
-
-          // Tìm title element
-          let titleElement = cell.querySelector(
-            '[class*="MuiDataGrid-columnHeaderTitle"], .MuiDataGrid-columnHeaderTitle'
-          );
-          if (titleElement) {
-            return cleanCellText(titleElement.textContent);
+          if (!cell) {
+            console.log(`No header cell found at index ${colIndex}`);
+            return "";
           }
 
-          // Fallback: data-field attribute
+          // Sử dụng CÙNG logic extract tên cột như trong detectMuiDataGrid
+          let columnName = "";
+
+          // Method 1: data-field attribute (most reliable)
           const dataField = cell.getAttribute("data-field");
-          if (dataField) {
-            return dataField;
+          if (
+            dataField &&
+            dataField !== "__check__" &&
+            dataField !== "__actions__" &&
+            dataField !== "actions"
+          ) {
+            columnName = dataField;
+            console.log(
+              `✓ Header ${colIndex} from data-field: "${columnName}"`
+            );
           }
 
-          // Fallback: text content
-          let textContent = cell.textContent.trim();
-          textContent = textContent.replace(/[↑↓▲▼⬆⬇]/g, "").trim();
-          return cleanCellText(textContent);
+          // Method 2: MuiDataGrid-columnHeaderTitle (most specific)
+          if (!columnName) {
+            const titleElement = cell.querySelector(
+              '[class*="MuiDataGrid-columnHeaderTitle"], .MuiDataGrid-columnHeaderTitle'
+            );
+            if (titleElement) {
+              const titleText = titleElement.textContent.trim();
+              if (titleText && titleText.length < 100) {
+                columnName = titleText;
+                console.log(
+                  `✓ Header ${colIndex} from titleElement: "${columnName}"`
+                );
+              }
+            }
+          }
+
+          // Method 3: aria-label (cleaned)
+          if (!columnName) {
+            const ariaLabel = cell.getAttribute("aria-label");
+            if (
+              ariaLabel &&
+              !ariaLabel.includes("Sort") &&
+              !ariaLabel.includes("Menu") &&
+              !ariaLabel.includes("Actions")
+            ) {
+              const cleanedLabel = ariaLabel
+                .replace(/^(Sort by|Column|Header) /, "")
+                .trim();
+              if (cleanedLabel && cleanedLabel.length < 100) {
+                columnName = cleanedLabel;
+                console.log(
+                  `✓ Header ${colIndex} from aria-label: "${columnName}"`
+                );
+              }
+            }
+          }
+
+          return cleanCellText(columnName || `Column ${colIndex + 1}`);
         });
 
         console.log("Header data extracted:", headerData);
@@ -642,96 +867,158 @@ function extractMuiDataGridData(
       }
     }
 
-    // Trích xuất dữ liệu từ các hàng
+    // Trích xuất dữ liệu từ các hàng - sử dụng mainContainer
     let dataRows = [];
 
-    // Cách 1: Tìm trong virtualScroller
-    const virtualScroller = dataGrid.querySelector(
+    // Cách 1: Tìm trong virtualScroller của main container
+    const virtualScroller = mainContainer.querySelector(
       '[class*="MuiDataGrid-virtualScroller"], .MuiDataGrid-virtualScroller'
     );
     if (virtualScroller) {
       dataRows = virtualScroller.querySelectorAll(
-        '[class*="MuiDataGrid-row"], .MuiDataGrid-row'
+        '[class*="MuiDataGrid-row"], .MuiDataGrid-row, [role="row"]'
       );
       console.log("Found data rows in virtualScroller:", dataRows.length);
     }
 
-    // Cách 2: Tìm tất cả rows và lọc bỏ header
+    // Cách 2: Tìm tất cả rows trong main và lọc bỏ header
     if (dataRows.length === 0) {
-      const allRows = dataGrid.querySelectorAll('[role="row"]');
+      const allRows = mainContainer.querySelectorAll('[role="row"]');
       dataRows = Array.from(allRows).filter((row) => {
-        // Lọc bỏ header rows
-        return (
-          !row.getAttribute("aria-rowindex") ||
-          row.getAttribute("aria-rowindex") !== "1"
-        );
+        // Lọ
+        const rowIndex = row.getAttribute("aria-rowindex");
+        const isInHeader = row.closest('[class*="MuiDataGrid-columnHeaders"]');
+        return rowIndex !== "1" && !isInHeader;
       });
       console.log("Found data rows by filtering:", dataRows.length);
     }
 
     // Cách 3: Tìm theo class MuiDataGrid-row không nằm trong header
     if (dataRows.length === 0) {
-      dataRows = dataGrid.querySelectorAll(
+      dataRows = mainContainer.querySelectorAll(
         '[class*="MuiDataGrid-row"]:not([class*="MuiDataGrid-columnHeader"])'
       );
       console.log("Found data rows by class filtering:", dataRows.length);
     }
 
     dataRows.forEach((row, rowIndex) => {
-      console.log(`Processing row ${rowIndex}`);
+      console.log(`Processing data row ${rowIndex + 1}`);
 
-      // Tìm cells trong row
+      // Tìm cells trong row - cải thiện detection
       let cells = [];
 
-      // Cách 1: Tìm theo class MuiDataGrid-cell
-      cells = row.querySelectorAll(
-        '[class*="MuiDataGrid-cell"], .MuiDataGrid-cell'
-      );
+      // Cách 1: Tìm theo role="gridcell" (most reliable)
+      cells = row.querySelectorAll('[role="gridcell"]');
+      console.log(`Method 1 - gridcell role: ${cells.length} cells`);
 
-      // Cách 2: Tìm theo role="gridcell"
+      // Cách 2: Tìm theo class MuiDataGrid-cell
       if (cells.length === 0) {
-        cells = row.querySelectorAll('[role="gridcell"]');
+        cells = row.querySelectorAll(
+          '[class*="MuiDataGrid-cell"], .MuiDataGrid-cell'
+        );
+        console.log(`Method 2 - MuiDataGrid-cell class: ${cells.length} cells`);
       }
 
       // Cách 3: Tìm các div con có data-field
       if (cells.length === 0) {
         cells = row.querySelectorAll("div[data-field]");
+        console.log(`Method 3 - data-field: ${cells.length} cells`);
       }
 
       // Cách 4: Fallback - tất cả div con
       if (cells.length === 0) {
         cells = row.children;
+        console.log(`Method 4 - all children: ${cells.length} cells`);
       }
 
-      console.log(`Found ${cells.length} cells in row ${rowIndex}`);
+      if (cells.length === 0) {
+        console.log(`No cells found in row ${rowIndex + 1}, skipping`);
+        return;
+      }
 
-      if (cells.length === 0) return;
+      console.log(
+        `Row ${rowIndex + 1}: Processing ${cells.length} cells with indices:`,
+        selectedColumnIndices
+      );
 
       const rowData = selectedColumnIndices.map((colIndex) => {
         const cell = cells[colIndex];
         if (!cell) {
-          console.log(`No cell found at index ${colIndex}`);
+          console.log(
+            `❌ No cell found at index ${colIndex} in row ${rowIndex + 1}`
+          );
           return "";
         }
 
-        const cellData = extractCellData(cell);
-        console.log(`Cell ${colIndex} data:`, cellData);
-        return cellData;
+        console.log(`Processing cell [${rowIndex + 1}, ${colIndex}]:`, cell);
+
+        // Improved cell data extraction with multiple strategies
+        let cellText = "";
+
+        // Strategy 1: Look for nested text elements first
+        const textElements = cell.querySelectorAll(
+          'span, div:not([class*="MuiDataGrid"]), p, a, strong, em'
+        );
+        if (textElements.length > 0) {
+          const texts = Array.from(textElements)
+            .map((el) => el.textContent.trim())
+            .filter((text) => text && text.length > 0);
+          if (texts.length > 0) {
+            cellText = texts.join(" ");
+          }
+        }
+
+        // Strategy 2: Direct text content
+        if (!cellText) {
+          cellText = cell.textContent.trim();
+        }
+
+        // Strategy 3: title attribute
+        if (!cellText) {
+          cellText = cell.getAttribute("title") || "";
+        }
+
+        // Strategy 4: aria-label
+        if (!cellText) {
+          cellText = cell.getAttribute("aria-label") || "";
+        }
+
+        const cleanedData = cleanCellText(cellText);
+        console.log(
+          `✓ Cell [${rowIndex + 1}, ${colIndex}] data: "${cleanedData}"`
+        );
+        return cleanedData;
       });
 
       // Chỉ thêm hàng nếu không phải toàn bộ rỗng
       if (rowData.some((cell) => cell.trim() !== "")) {
-        console.log("Adding row data:", rowData);
+        console.log(`✅ Adding row ${rowIndex + 1} data:`, rowData);
         extractedData.push(rowData);
       } else {
-        console.log("Skipping empty row");
+        console.log(`❌ Skipping empty row ${rowIndex + 1}`);
       }
     });
   } catch (error) {
     console.error("Error extracting MuiDataGrid data:", error);
   }
 
-  console.log("Final extracted data:", extractedData);
+  console.log(
+    `Final extraction result: ${extractedData.length} rows extracted`
+  );
+
+  // Debug: Show column mapping
+  if (extractedData.length > 0) {
+    console.log("=== COLUMN MAPPING DEBUG ===");
+    console.log("Selected column indices:", selectedColumnIndices);
+    if (includeHeaders && extractedData[0]) {
+      console.log("Header row:", extractedData[0]);
+    }
+    if (extractedData.length > 1) {
+      console.log("First data row:", extractedData[1]);
+    }
+    console.log("=== END DEBUG ===");
+  }
+
   return extractedData;
 }
 
@@ -947,13 +1234,80 @@ function extractCellData(cell) {
 /**
  * Làm sạch text từ cell
  */
+/**
+ * Debug helper - log MuiDataGrid structure
+ */
+function debugMuiDataGridStructure(dataGrid) {
+  console.log("=== MUI DataGrid Structure Debug ===");
+  console.log("DataGrid element:", dataGrid);
+  console.log("DataGrid classes:", dataGrid.className);
+
+  // Check for header container
+  const headerContainers = dataGrid.querySelectorAll(
+    '[class*="MuiDataGrid-columnHeaders"], .MuiDataGrid-columnHeaders'
+  );
+  console.log("Header containers found:", headerContainers.length);
+
+  // Check for header cells
+  const headerCells = dataGrid.querySelectorAll(
+    '[class*="MuiDataGrid-columnHeader"], .MuiDataGrid-columnHeader'
+  );
+  console.log("Header cells found:", headerCells.length);
+
+  if (headerCells.length > 0) {
+    console.log("Sample header cell structure:");
+    const sampleHeader = headerCells[0];
+    console.log("- Element:", sampleHeader);
+    console.log("- Classes:", sampleHeader.className);
+    console.log("- data-field:", sampleHeader.getAttribute("data-field"));
+    console.log("- Text content:", sampleHeader.textContent);
+    console.log(
+      "- Children:",
+      Array.from(sampleHeader.children).map((child) => ({
+        tag: child.tagName,
+        classes: child.className,
+        text: child.textContent.substring(0, 50),
+      }))
+    );
+  }
+
+  // Check for data rows
+  const dataRows = dataGrid.querySelectorAll(
+    '[role="row"]:not([aria-rowindex="1"])'
+  );
+  console.log("Data rows found:", dataRows.length);
+
+  if (dataRows.length > 0) {
+    console.log("Sample data row structure:");
+    const sampleRow = dataRows[0];
+    console.log("- Element:", sampleRow);
+    console.log("- Classes:", sampleRow.className);
+    const cells = sampleRow.querySelectorAll(
+      '[role="gridcell"], [class*="MuiDataGrid-cell"]'
+    );
+    console.log("- Cells in row:", cells.length);
+    if (cells.length > 0) {
+      console.log("- Sample cell:", {
+        element: cells[0],
+        classes: cells[0].className,
+        text: cells[0].textContent.substring(0, 50),
+      });
+    }
+  }
+
+  console.log("=== End Debug ===");
+}
+
 function cleanCellText(text) {
   if (!text) return "";
 
-  // Loại bỏ khoảng trắng thừa và ký tự xuống dòng
   return text
     .replace(/\s+/g, " ") // Thay thế nhiều khoảng trắng bằng 1 khoảng trắng
     .replace(/\n/g, " ") // Thay thế xuống dòng bằng khoảng trắng
+    .replace(/\t/g, " ") // Thay thế tab bằng khoảng trắng
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g, "") // Loại bỏ invisible characters
+    .replace(/[↑↓▲▼⬆⬇]/g, "") // Loại bỏ arrow symbols (sort indicators)
+    .replace(/\s*(asc|desc|ascending|descending)\s*/gi, "") // Loại bỏ sort text
     .trim(); // Loại bỏ khoảng trắng đầu cuối
 }
 
