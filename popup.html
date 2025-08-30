@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 400px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .section h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        button:hover {
+            background-color: #3367d6;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border: 1px solid #badbcc;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: #842029;
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .column-selector {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .column-item {
+            margin-bottom: 5px;
+        }
+
+        .column-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .sheet-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Google Sheet Configuration Section -->
+    <div class="section">
+        <h3>📊 Google Sheet Configuration</h3>
+        <input type="text" id="sheetUrl" placeholder="Paste Google Sheet URL here...">
+        <button id="saveSheetUrl">Save Sheet URL</button>
+        <button id="openSheet" disabled>Open Google Sheet</button>
+        <div class="sheet-info" id="sheetInfo"></div>
+    </div>
+
+    <!-- Authentication Section -->
+    <div class="section">
+        <h3>🔐 Authentication</h3>
+        <button id="authenticate">Connect to Google</button>
+        <button id="logout" style="display: none;">Logout</button>
+        <div id="authStatus" class="status"></div>
+    </div>
+
+    <!-- Table Detection Section -->
+    <div class="section">
+        <h3>📋 Table Detection</h3>
+        <button id="detectTables">Scan Current Page</button>
+        <div id="tableStatus" class="status"></div>
+
+        <!-- Column Selection -->
+        <div id="columnSelection" style="display: none;">
+            <h4>Select Columns to Export:</h4>
+            <div id="columnList" class="column-selector"></div>
+        </div>
+    </div>
+
+    <!-- Export Configuration Section -->
+    <div class="section" id="exportSection" style="display: none;">
+        <h3>📤 Export Configuration</h3>
+
+        <!-- Sheet Selection -->
+        <label for="targetSheet">Target Sheet:</label>
+        <select id="targetSheet">
+            <option value="">Select a sheet...</option>
+        </select>
+
+        <!-- Starting Row -->
+        <label for="startRow">Starting Row (leave empty for next available):</label>
+        <input type="number" id="startRow" placeholder="e.g., 2" min="1">
+
+        <!-- Export Options -->
+        <div style="margin: 10px 0;">
+            <label>
+                <input type="checkbox" id="includeHeaders" checked>
+                Include table headers
+            </label>
+        </div>
+
+        <button id="exportData">Export to Google Sheets</button>
+        <div id="exportStatus" class="status"></div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="section">
+        <h3>💡 Instructions</h3>
+        <ol style="font-size: 12px; margin: 0; padding-left: 20px;">
+            <li>Enter your Google Sheet URL and save it</li>
+            <li>Authenticate with Google</li>
+            <li>Navigate to a page with data tables</li>
+            <li>Click "Scan Current Page" to detect tables</li>
+            <li>Select columns and configure export settings</li>
+            <li>Click "Export to Google Sheets"</li>
+        </ol>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

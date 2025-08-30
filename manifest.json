@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Web Table to Google Sheets Exporter",
+  "version": "2.5",
+  "description": "Export web table data to Google Sheets",
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "identity",
+    "https://www.googleapis.com/*",
+    "http://203.29.19.109/brosis-web/home/"
+  ],
+
+  "host_permissions": [
+    "https://docs.google.com/*",
+    "https://sheets.googleapis.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Export to Google Sheets"
+  },
+
+  "oauth2": {
+    "client_id": "527876921282-4hsm5e9c1gc2ori4ppqg38r6uv0l8d1c.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive.readonly"
+    ]
+  }
+}
